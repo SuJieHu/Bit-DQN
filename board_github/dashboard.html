@@ -1,0 +1,1984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bit-DQN Experiment Dashboard · phd27fall</title>
+  <style>
+    :root {
+      --bg: #fafaf7;
+      --bg-soft: #f1efe9;
+      --card-bg: #ffffff;
+      --border: #e5e3dd;
+      --border-strong: #c9c6bd;
+      --text: #1c1f24;
+      --text-muted: #6a6e75;
+      --text-faint: #9a9690;
+      --accent: #1f4e79;
+      --accent-hover: #163a5b;
+      --accent-soft: #e8eff6;
+      --teal: #2f6f7c;
+      --teal-soft: #e1edef;
+      --warn: #b03a2e;
+      --warn-soft: #fae7e3;
+      --ok: #2c6e49;
+      --ok-soft: #e2efe8;
+      --arch-mlp: #8b6a3f;
+      --arch-mlp-soft: #f1ead9;
+      --arch-transformer: #1f4e79;
+      --arch-transformer-soft: #e8eff6;
+      --arch-decoder: #6c4a7f;
+      --arch-decoder-soft: #efe7f3;
+      --arch-baseline: #6a6e75;
+      --arch-baseline-soft: #ececea;
+      --shadow-sm: 0 1px 2px rgba(28, 31, 36, 0.05);
+      --shadow-md: 0 4px 16px -6px rgba(28, 31, 36, 0.10), 0 1px 3px rgba(28, 31, 36, 0.06);
+      --serif: "Source Serif Pro", "Source Serif 4", "EB Garamond", "Crimson Pro", Georgia, "Times New Roman", serif;
+      --sans: "Inter", -apple-system, "Segoe UI", "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+      --mono: "JetBrains Mono", "SF Mono", "Menlo", "Consolas", monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    .serif { font-family: var(--serif); }
+    .mono  { font-family: var(--mono); }
+
+    /* ---------- header ---------- */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(250, 250, 247, 0.94);
+      backdrop-filter: saturate(160%) blur(10px);
+      -webkit-backdrop-filter: saturate(160%) blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.85rem 1.4rem 0.6rem;
+    }
+    .brand {
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+    .brand h1 {
+      font-family: var(--serif);
+      margin: 0;
+      font-size: 1.45rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      color: var(--text);
+    }
+    .brand .sub {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+    .brand .results-path {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--text-faint);
+      margin-left: auto;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 0.45rem 0.7rem;
+      margin-top: 0.65rem;
+    }
+    .filter-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .filter-label {
+      font-family: var(--serif);
+      font-size: 0.78rem;
+      font-style: italic;
+      color: var(--text-muted);
+      letter-spacing: 0.02em;
+    }
+    .pill-row {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 0.22rem;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.18rem 0.55rem;
+      border: 1px solid var(--border-strong);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--text-muted);
+      font-size: 0.74rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .12s ease;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .pill:hover { border-color: var(--accent); color: var(--accent); }
+    .pill.active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .pill .swatch {
+      width: 8px; height: 8px;
+      border-radius: 999px;
+      display: inline-block;
+    }
+    /* tri-state feature toggle */
+    .tri {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.18rem 0.55rem;
+      border: 1px solid var(--border-strong);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--text-muted);
+      font-size: 0.74rem;
+      font-weight: 500;
+      cursor: pointer;
+      gap: 0.3rem;
+      user-select: none;
+    }
+    .tri[data-state="include"] {
+      background: var(--ok-soft);
+      border-color: var(--ok);
+      color: var(--ok);
+    }
+    .tri[data-state="exclude"] {
+      background: var(--warn-soft);
+      border-color: var(--warn);
+      color: var(--warn);
+      text-decoration: line-through;
+    }
+    .tri::after {
+      content: "·";
+      color: var(--text-faint);
+      font-weight: 700;
+      margin-left: 0.1rem;
+    }
+    .tri[data-state="include"]::after { content: "✓"; color: var(--ok); }
+    .tri[data-state="exclude"]::after { content: "✕"; color: var(--warn); text-decoration: none; }
+
+    .search-input {
+      border: 1px solid var(--border-strong);
+      border-radius: 999px;
+      padding: 0.22rem 0.65rem;
+      font-size: 0.78rem;
+      background: #fff;
+      color: var(--text);
+      width: 14rem;
+      font-family: var(--sans);
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .meta-row {
+      margin-top: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      flex-wrap: wrap;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+    }
+    .stat-num {
+      font-family: var(--serif);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .btn {
+      border: 1px solid var(--accent);
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      font-weight: 500;
+      transition: .12s ease;
+      padding: 0.26rem 0.78rem;
+      font-size: 0.78rem;
+      font-family: var(--sans);
+    }
+    .btn:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+    .btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+    .btn-ghost {
+      background: transparent;
+      color: var(--accent);
+    }
+    .btn-ghost:hover { background: var(--accent-soft); }
+    .btn-mini {
+      padding: 0.14rem 0.48rem;
+      font-size: 0.7rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-strong);
+      background: #fff;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: var(--sans);
+    }
+    .btn-mini:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ---------- metrics help ---------- */
+    .metrics-help {
+      margin-top: 0.55rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: linear-gradient(180deg, #ffffff, #fcfbf7);
+      overflow: hidden;
+    }
+    .metrics-help > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 0.4rem 0.7rem;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+    .metrics-help > summary::-webkit-details-marker { display: none; }
+    .metrics-help > summary::before {
+      content: "▸";
+      color: var(--accent);
+      display: inline-block;
+      transition: transform .15s ease;
+      font-size: 0.78rem;
+    }
+    .metrics-help[open] > summary::before { transform: rotate(90deg); }
+    .metrics-help > summary .serif {
+      font-family: var(--serif);
+      font-size: 0.92rem;
+      font-style: italic;
+      color: var(--text);
+      margin-right: 0.25rem;
+    }
+    .metric-chip {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 0.25rem;
+      padding: 0.1rem 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--text-muted);
+      font-size: 0.72rem;
+    }
+    .metric-chip b {
+      color: var(--accent);
+      font-family: var(--mono);
+      font-weight: 600;
+      font-size: 0.74rem;
+    }
+    .metric-hint {
+      margin-left: auto;
+      font-style: italic;
+      font-family: var(--serif);
+      color: var(--text-faint);
+      font-size: 0.74rem;
+    }
+    .metrics-help-body {
+      padding: 0.2rem 1rem 0.85rem 1.6rem;
+      border-top: 1px dotted var(--border);
+      background: #fdfcf8;
+      color: var(--text);
+      font-size: 0.84rem;
+      line-height: 1.55;
+    }
+    .metrics-help-body p { margin: 0.55rem 0 0.35rem; color: var(--text); }
+    .metrics-help-body ul { margin: 0.2rem 0 0.4rem; padding-left: 1.1rem; }
+    .metrics-help-body li { margin-bottom: 0.25rem; }
+    .metrics-help-body li b {
+      color: var(--accent);
+      font-family: var(--mono);
+      font-weight: 600;
+      font-size: 0.82rem;
+    }
+    .metrics-help-body code {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      background: var(--bg-soft);
+      padding: 0.04rem 0.32rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+    .metrics-help-constants {
+      margin-top: 0.55rem !important;
+      padding-top: 0.45rem;
+      border-top: 1px dotted var(--border);
+      font-family: var(--serif);
+      font-style: italic;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    /* ---------- main ---------- */
+    main { padding: 1.2rem 1.4rem 4rem; }
+    .group-section { margin-bottom: 1.6rem; }
+    .group-head {
+      display: flex;
+      align-items: baseline;
+      gap: 0.8rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.45rem;
+      margin-bottom: 0.9rem;
+    }
+    .group-head .title {
+      font-family: var(--serif);
+      font-size: 1.18rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      color: var(--text);
+    }
+    .group-head .swatch {
+      width: 10px; height: 10px; border-radius: 999px;
+      display: inline-block;
+      transform: translateY(-1px);
+    }
+    .group-head .count {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .grid-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: box-shadow .15s ease, border-color .15s ease;
+    }
+    .card:hover { box-shadow: var(--shadow-md); border-color: var(--border-strong); }
+    .card.selected { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .card-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.32rem 0.45rem;
+      padding: 0.5rem 0.7rem 0.55rem;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, #ffffff, #fcfbf7);
+    }
+    .card-head .card-name { flex: 1 1 60%; }
+    .card-head input[type="checkbox"] {
+      width: 14px; height: 14px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .card-name {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 0.96rem;
+      color: var(--text);
+      letter-spacing: 0.005em;
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.22rem;
+      padding: 0.08rem 0.4rem;
+      border-radius: 999px;
+      font-size: 0.66rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      border: 1px solid var(--border-strong);
+      color: var(--text-muted);
+      background: var(--bg-soft);
+      white-space: nowrap;
+    }
+    .badge.arch-mlp                 { color: var(--arch-mlp);         background: var(--arch-mlp-soft);         border-color: var(--arch-mlp); }
+    .badge.arch-transformer         { color: var(--arch-transformer); background: var(--arch-transformer-soft); border-color: var(--arch-transformer); }
+    .badge.arch-transformer_decoder { color: var(--arch-decoder);     background: var(--arch-decoder-soft);     border-color: var(--arch-decoder); }
+    .badge.arch-baseline            { color: var(--arch-baseline);    background: var(--arch-baseline-soft);    border-color: var(--arch-baseline); }
+    .badge.kind-baseline            { color: var(--arch-baseline);    background: #fff;                         border-color: var(--arch-baseline); }
+    .badge.feat {
+      text-transform: none;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      color: var(--teal);
+      background: var(--teal-soft);
+      border-color: var(--teal);
+      opacity: 0.86;
+    }
+    .badge.reward-shaped {
+      color: var(--ok); background: var(--ok-soft); border-color: var(--ok);
+    }
+    .badge.reward-sparse {
+      color: var(--text-muted); background: var(--bg-soft);
+    }
+    .badge.pending {
+      color: var(--warn); background: var(--warn-soft); border-color: var(--warn);
+      letter-spacing: 0.04em;
+    }
+    .card.pending { opacity: 0.78; }
+
+    .card-body {
+      display: grid;
+      grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
+      gap: 0.6rem;
+      padding: 0.7rem 0.75rem;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.32rem;
+    }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.4rem;
+      padding-bottom: 0.18rem;
+      border-bottom: 1px dotted var(--border);
+    }
+    .stat-row:last-child { border-bottom: none; }
+    .stat-row .label {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+    .stat-row .val {
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-row .val.muted { color: var(--text-faint); }
+    .stat-row .val.good  { color: var(--ok); font-weight: 600; }
+    .stat-row .val.warn  { color: var(--warn); font-weight: 600; }
+
+    .chart-box {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      min-width: 0;
+    }
+    .chart-toolbar {
+      display: flex;
+      gap: 0.18rem;
+      margin-bottom: 0.28rem;
+      justify-content: flex-end;
+    }
+    .chart-toolbar .btn-mini.active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .chart-svg {
+      width: 100%;
+      height: 170px;
+      display: block;
+      background: linear-gradient(180deg, #fdfcf9 0%, #ffffff 100%);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    .chart-axis  { stroke: var(--border-strong); stroke-width: 1; fill: none; }
+    .chart-grid  { stroke: var(--border); stroke-width: 0.6; stroke-dasharray: 2 3; fill: none; }
+    .chart-label { font-family: var(--serif); font-size: 9.5px; fill: var(--text-muted); font-style: italic; }
+    .chart-tick  { font-family: var(--mono); font-size: 9px; fill: var(--text-muted); }
+    .chart-title { font-family: var(--serif); font-size: 10px; fill: var(--text); font-weight: 600; }
+
+    .examples-zone {
+      border-top: 1px solid var(--border);
+      padding: 0.4rem 0.7rem 0.55rem;
+      background: #fcfbf7;
+    }
+    .examples-zone > summary {
+      cursor: pointer;
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 0.8rem;
+      color: var(--accent);
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .examples-zone > summary::-webkit-details-marker { display: none; }
+    .examples-zone > summary::before {
+      content: "▸";
+      transition: transform .12s ease;
+      display: inline-block;
+      color: var(--accent);
+    }
+    .examples-zone[open] > summary::before { transform: rotate(90deg); }
+    .examples-zone .examples-body {
+      margin-top: 0.35rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .bucket {
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: #fff;
+      overflow: hidden;
+    }
+    .bucket-head {
+      cursor: pointer;
+      padding: 0.22rem 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.5rem;
+      background: var(--bg-soft);
+      list-style: none;
+      font-size: 0.74rem;
+    }
+    .bucket-head:hover { background: #ebe9e2; }
+    .bucket-head::-webkit-details-marker { display: none; }
+    .bucket-head .bucket-label {
+      font-family: var(--serif);
+      font-style: italic;
+      color: var(--text-muted);
+      flex: 1 1 auto;
+    }
+    .bucket-head .bucket-len {
+      font-family: var(--mono);
+      font-size: 0.74rem;
+      color: var(--text);
+      font-weight: 600;
+    }
+    .bucket-head .bucket-rate {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      flex: 0 0 auto;
+    }
+    .bucket-head .bucket-rate.good { color: var(--ok); }
+    .bucket-head .bucket-rate.warn { color: var(--warn); }
+    .bucket-body {
+      padding: 0.18rem 0;
+      background: #fff;
+    }
+    /* Grid-based sample list. Layout: ``# | status+scores | bits (scrollable)``.
+       The first two columns are content-sized and never wrap; the bits column
+       takes the remaining space, has ``min-width: 0``, and scrolls horizontally
+       for long sequences (n=50). */
+    .sample-list {
+      display: flex;
+      flex-direction: column;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      line-height: 1.25;
+    }
+    .sample-row {
+      --row-bg: #ffffff;
+      display: grid;
+      grid-template-columns: 1.6rem auto minmax(0, 1fr);
+      align-items: center;
+      border-bottom: 1px dotted var(--border);
+      background: var(--row-bg);
+    }
+    .sample-row:last-child { border-bottom: none; }
+    .sample-row.head {
+      --row-bg: #fcfbf7;
+      color: var(--text-faint);
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 0.66rem;
+      letter-spacing: 0.02em;
+      align-items: baseline;
+    }
+    .sample-row.ok   { --row-bg: #f7fbf8; }
+    .sample-row.fail { --row-bg: #fdf7f5; }
+    .sample-row:not(.head):hover { --row-bg: var(--accent-soft); }
+    .sample-col {
+      padding: 0.08rem 0.45rem;
+      min-width: 0;
+    }
+    .sample-col.num {
+      text-align: right;
+      color: var(--text-faint);
+      font-variant-numeric: tabular-nums;
+    }
+    .sample-col.stats {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.32rem;
+      white-space: nowrap;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+      padding-right: 0.6rem;
+      border-right: 1px dotted var(--border);
+    }
+    .sample-col.stats .hit-pill {
+      flex: 0 0 auto;
+      display: inline-block;
+      padding: 0.02rem 0.36rem;
+      border-radius: 999px;
+      font-size: 0.6rem;
+      font-family: var(--serif);
+      font-style: italic;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .sample-col.stats .hit-pill.ok   { background: var(--ok-soft);   color: var(--ok); }
+    .sample-col.stats .hit-pill.fail { background: var(--warn-soft); color: var(--warn); }
+    .sample-col.stats .score {
+      display: inline-block;
+      font-variant-numeric: tabular-nums;
+    }
+    .sample-col.stats .score .lbl {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 0.62rem;
+      color: var(--text-faint);
+      margin-right: 0.18rem;
+    }
+    .sample-col.bits {
+      overflow-x: auto;
+      padding: 0.08rem 0.55rem 0.08rem 0.5rem;
+    }
+    .sample-col.bits::-webkit-scrollbar { height: 4px; }
+    .sample-col.bits::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+    .sample-col.bits::-webkit-scrollbar-track { background: transparent; }
+    .sample-col.bits .bitrow {
+      display: block;
+      white-space: nowrap;
+      letter-spacing: 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .sample-col.bits .bitrow + .bitrow { margin-top: 0; }
+    .sample-col.bits .lbl {
+      display: inline-block;
+      width: 1.6em;
+      color: var(--text-faint);
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 0.62rem;
+      margin-right: 0.3rem;
+      text-align: right;
+    }
+    .bit-mis { color: var(--warn); text-decoration: underline; text-decoration-thickness: 1.3px; text-underline-offset: 1.5px; font-weight: 700; }
+    .bit-hit { color: var(--text); }
+    .examples-loading {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      padding: 0.3rem 0;
+    }
+    .examples-error {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 0.82rem;
+      color: var(--warn);
+      padding: 0.3rem 0;
+    }
+
+    .empty-state {
+      padding: 3rem 1rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 1rem;
+    }
+
+    /* ---------- compare lightbox ---------- */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.2rem;
+      background: rgba(20, 22, 28, 0.62);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .lightbox.open { display: flex; }
+    .lightbox-panel {
+      width: min(98vw, 1720px);
+      height: min(94vh, 920px);
+      background: var(--card-bg);
+      border-radius: 10px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.34);
+      padding: 1rem 1.2rem;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 0.65rem;
+      overflow: hidden;
+    }
+    .lightbox-head {
+      display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
+    }
+    .lightbox-head h2 {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 1.2rem;
+      margin: 0;
+      color: var(--text);
+    }
+    .lightbox-head .sub {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 0.86rem;
+      color: var(--text-muted);
+    }
+    .lightbox-controls {
+      display: flex; gap: 0.32rem; flex-wrap: wrap; align-items: center;
+    }
+    .lightbox-body {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 1rem;
+      min-height: 0;
+    }
+    .big-chart-wrap {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      padding: 0.6rem;
+      min-height: 0;
+      display: flex;
+      align-items: stretch;
+    }
+    .big-chart-wrap svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .legend {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fcfbf7;
+      padding: 0.55rem;
+      overflow-y: auto;
+      max-height: 100%;
+      font-size: 0.78rem;
+    }
+    .legend-title {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 0.92rem;
+      margin-bottom: 0.4rem;
+      color: var(--text);
+    }
+    .legend-item {
+      display: flex;
+      gap: 0.4rem;
+      align-items: center;
+      padding: 0.2rem 0;
+      border-bottom: 1px dotted var(--border);
+    }
+    .legend-item:last-child { border-bottom: none; }
+    .legend-swatch {
+      flex: 0 0 auto;
+      width: 18px; height: 3px;
+      border-radius: 2px;
+    }
+    .legend-name {
+      font-family: var(--mono);
+      font-size: 0.74rem;
+      color: var(--text);
+      flex: 1 1 auto;
+      min-width: 0;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      line-height: 1.25;
+    }
+    .legend-arch {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      flex: 0 0 auto;
+    }
+    .legend-meta {
+      flex: 1 1 100%;
+      margin-top: 0.15rem;
+      font-family: var(--mono);
+      font-size: 0.66rem;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+      line-height: 1.3;
+    }
+    .legend-meta .meta-kv { white-space: nowrap; margin-right: 0.55rem; }
+    .legend-meta .meta-kv b { color: var(--text); font-weight: 600; }
+    .legend-item {
+      cursor: pointer;
+      border-radius: 5px;
+      padding: 0.32rem 0.42rem 0.38rem;
+      border: 1px solid transparent;
+      transition: background-color .12s ease, opacity .15s ease, border-color .12s ease;
+      flex-wrap: wrap;
+      align-items: baseline;
+      column-gap: 0.4rem;
+      row-gap: 0.05rem;
+    }
+    .legend-item:hover { background: var(--accent-soft); border-color: var(--border); }
+    .legend-item.pinned {
+      background: var(--accent-soft);
+      box-shadow: inset 2px 0 0 var(--accent);
+      border-color: var(--border);
+    }
+    .legend-item.dim { opacity: 0.35; }
+    /* hover tooltip on the SVG */
+    .chart-tip-bg {
+      fill: rgba(20, 22, 28, 0.92);
+      stroke: rgba(255,255,255,0.12);
+    }
+    .chart-tip-title {
+      font-family: var(--mono);
+      font-size: 11px;
+      fill: #fafaf7;
+      font-weight: 600;
+    }
+    .chart-tip-arch {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 10px;
+      fill: #c8cbd1;
+    }
+    .chart-tip-row {
+      font-family: var(--mono);
+      font-size: 10.5px;
+      fill: #e5e3dd;
+    }
+    .chart-tip-row.dim { fill: #999da6; }
+    .chart-tip-key {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 10px;
+      fill: #c8cbd1;
+    }
+    /* per-point crosshair + value bubble (follows the mouse) */
+    .chart-hover-line {
+      stroke-dasharray: 4 4;
+      stroke-width: 1.1;
+      opacity: 0.78;
+      pointer-events: none;
+    }
+    .chart-hover-ring  { fill: none; stroke-width: 2; pointer-events: none; }
+    .chart-hover-dot   { pointer-events: none; }
+    .chart-hover-bg    { fill: rgba(20, 22, 28, 0.94); stroke: rgba(255,255,255,0.16); stroke-width: 0.6; }
+    .chart-hover-t     { font-family: var(--mono); font-size: 10.5px; fill: #fafaf7; }
+    .chart-hover-t.b   { font-weight: 700; font-size: 11.5px; }
+    .chart-hover-k     { font-family: var(--serif); font-style: italic; font-size: 9.5px; fill: #c8cbd1; }
+    .legend-hint {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 0.7rem;
+      color: var(--text-faint);
+      margin: 0.15rem 0 0.35rem;
+      line-height: 1.35;
+    }
+    /* curve & marker highlight states in compare lightbox */
+    #bigChart .curve         { transition: stroke-width .12s ease, opacity .12s ease; }
+    #bigChart .marker        { transition: r .12s ease, opacity .12s ease; }
+    #bigChart.has-focus .curve.dim,
+    #bigChart.has-focus .marker.dim { opacity: 0.10; }
+    #bigChart .curve.hi      { stroke-width: 3.2px; }
+    #bigChart .marker.hi     { r: 2.6; }
+    #bigChart .curve.hi, #bigChart .marker.hi { opacity: 1; }
+
+    .toast {
+      position: fixed;
+      bottom: 1.4rem;
+      right: 1.4rem;
+      background: var(--text);
+      color: #fff;
+      padding: 0.55rem 0.85rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+      opacity: 0;
+      transition: opacity .2s ease, transform .2s ease;
+      transform: translateY(8px);
+      z-index: 1500;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 720px) {
+      .grid-cards { grid-template-columns: 1fr; }
+      .card-body { grid-template-columns: 1fr; }
+      .lightbox-body { grid-template-columns: 1fr; }
+      .legend { max-height: 30vh; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="brand">
+      <h1>Bit-DQN Experiment Dashboard</h1>
+      <span class="sub">sequence-length scaling of binary policies</span>
+      <!-- <span class="results-path" id="resultsPath"></span> -->
+      <span class="results-path" >Author: Sujie Hu @ Tsinghua University (issjaaa312@gmail.com)</span>
+    </div>
+
+    <details class="metrics-help">
+      <summary>
+        <span class="serif">Metric definitions</span>
+        <span class="metric-chip"><b>success</b>&nbsp;exact match</span>
+        <span class="metric-chip"><b>bit-acc</b>&nbsp;per-bit Hamming</span>
+        <span class="metric-chip"><b>prefix-acc</b>&nbsp;leading-prefix ratio</span>
+        <span class="metric-hint">click to expand</span>
+      </summary>
+      <div class="metrics-help-body">
+        <p>
+          Each variant is evaluated on random binary targets at every sequence length
+          <i>n</i> &isin; [1,&nbsp;50]. Three complementary metrics are reported:
+        </p>
+        <ul>
+          <li>
+            <b>success rate.</b>
+            Fraction of evaluation episodes whose generated sequence matches the target
+            <i>exactly</i> (Hamming distance = 0). Strictest, episode-level metric.
+          </li>
+          <li>
+            <b>bit accuracy.</b>
+            Mean per-position bit agreement, averaged over episodes:
+            <code>1 &minus; Hamming(gen, tgt) / n</code>.
+            Random guessing &asymp; 0.5; perfect policy = 1.0.
+          </li>
+          <li>
+            <b>prefix accuracy.</b>
+            For each episode, the longest correct leading prefix divided by <i>n</i>,
+            then averaged. Measures how far the policy gets before its first mistake.
+          </li>
+        </ul>
+        <p class="metrics-help-constants">
+          All DQN variants share the same training budget &mdash;
+          <code>episodes = 1200</code>,
+          <code>hidden_dim = 128</code>,
+          <code>eval_episodes = 200</code>;
+          baselines do not train (<code>episodes = 0</code>,
+          <code>eval_episodes = 1000</code>).
+        </p>
+      </div>
+    </details>
+
+    <div class="toolbar">
+      <div class="filter-group">
+        <span class="filter-label">Arch</span>
+        <div class="pill-row" id="archFilters"></div>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Algorithm</span>
+        <div class="pill-row" id="algoFilters"></div>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Reward</span>
+        <div class="pill-row" id="rewardFilters"></div>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Features</span>
+        <div class="pill-row" id="featureFilters"></div>
+      </div>
+      <div class="filter-group">
+        <input class="search-input" id="searchInput" type="search" placeholder="search variant name&hellip;" />
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Group by</span>
+        <div class="pill-row" id="groupBy">
+          <span class="pill active" data-group="arch">arch</span>
+          <span class="pill" data-group="algorithm">algorithm</span>
+          <span class="pill" data-group="reward_mode">reward</span>
+          <span class="pill" data-group="none">none</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="meta-row">
+      <span>Showing <span class="stat-num" id="visibleCount">0</span> / <span id="totalCount">0</span> variants</span>
+      <span><span class="stat-num" id="selectedCount">0</span> selected</span>
+      <span style="flex:1"></span>
+      <button class="btn-mini" id="selectAllBtn" type="button">Select all visible</button>
+      <button class="btn-mini" id="clearSelectionBtn" type="button">Clear selection</button>
+      <button class="btn-mini" id="resetFiltersBtn" type="button">Reset filters</button>
+      <button class="btn" id="compareBtn" type="button" disabled>Compare selected &raquo;</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="empty-state">Loading&hellip;</div>
+  </main>
+
+  <div class="lightbox" id="lightbox" aria-hidden="true">
+    <div class="lightbox-panel">
+      <div class="lightbox-head">
+        <div>
+          <h2 id="lbTitle">Success rate vs. sequence length</h2>
+          <div class="sub" id="lbSub">comparing selected variants</div>
+        </div>
+        <div class="lightbox-controls">
+          <button class="btn-mini chart-metric-btn active" data-metric="success_rate" type="button">success</button>
+          <button class="btn-mini chart-metric-btn" data-metric="bit_accuracy" type="button">bit-acc</button>
+          <button class="btn-mini chart-metric-btn" data-metric="prefix_accuracy" type="button">prefix-acc</button>
+          <button class="btn-ghost btn" id="lbClose" type="button">Close &#10005;</button>
+        </div>
+      </div>
+      <div class="lightbox-body">
+        <div class="big-chart-wrap"><svg id="bigChart" viewBox="0 0 800 480" preserveAspectRatio="none"></svg></div>
+        <div class="legend">
+          <div class="legend-title serif">Legend</div>
+          <div id="legendList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // =========================================================================
+    // state
+    // =========================================================================
+    const state = {
+      variants: [],
+      facets: {arch: [], algorithm: [], reward_mode: []},
+      activeArch: new Set(),
+      activeAlgo: new Set(),
+      activeReward: new Set(),
+      features: {double_dqn: "any", dueling: "any", per: "any", her: "any"},  // any | include | exclude
+      search: "",
+      groupBy: "arch",
+      selected: new Set(),
+      cardMetric: new Map(),    // variant name -> active metric in its mini chart
+      compareMetric: "success_rate",
+      examplesCache: new Map(), // variant name -> data | "loading" | "error:..."
+      focusVariant: null,       // transient hover focus in compare lightbox
+      pinnedVariant: null,      // sticky focus (click to toggle)
+    };
+
+    const ARCH_COLORS = {
+      mlp: "#8b6a3f",
+      transformer: "#1f4e79",
+      transformer_decoder: "#6c4a7f",
+      baseline: "#6a6e75",
+      unknown: "#999999",
+    };
+    const ARCH_ORDER = ["transformer_decoder", "transformer", "mlp", "baseline"];
+
+    const FEATURE_FLAGS = [
+      {key: "double_dqn", label: "double"},
+      {key: "dueling",    label: "dueling"},
+      {key: "per",        label: "PER"},
+      {key: "her",        label: "HER"},
+    ];
+
+    // =========================================================================
+    // utilities
+    // =========================================================================
+    const $  = (id) => document.getElementById(id);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+    const esc = (v) => String(v ?? "").replace(/[&<>'"]/g, c => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;"
+    }[c]));
+    const escAttr = esc;
+
+    function fmt(v, digits=3) {
+      if (v == null || Number.isNaN(v)) return "—";
+      const n = Number(v);
+      if (!Number.isFinite(n)) return "—";
+      return n.toFixed(digits);
+    }
+    function fmtPct(v) {
+      if (v == null || Number.isNaN(v)) return "—";
+      return (Number(v) * 100).toFixed(1) + "%";
+    }
+
+    function toast(msg, ms=1800) {
+      const t = $("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => t.classList.remove("show"), ms);
+    }
+
+    async function fetchJson(url) {
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`);
+      return await resp.json();
+    }
+
+    // =========================================================================
+    // bootstrap
+    // =========================================================================
+    async function bootstrap() {
+      let payload;
+      try {
+        payload = await fetchJson("api/runs.json");
+      } catch (err) {
+        $("main").innerHTML = `<div class="empty-state">Failed to load: ${esc(err.message || err)}</div>`;
+        return;
+      }
+      state.variants = payload.variants || [];
+      state.facets = payload.facets || {arch: [], algorithm: [], reward_mode: []};
+      const rp = $("resultsPath");
+      if (rp) rp.textContent = payload.results_dir || "";
+      $("totalCount").textContent = state.variants.length;
+      buildFilterUI();
+      renderAll();
+    }
+
+    function buildFilterUI() {
+      // arch
+      const archHost = $("archFilters");
+      const archOrdered = state.facets.arch.slice().sort((a,b) =>
+        (ARCH_ORDER.indexOf(a) < 0 ? 9 : ARCH_ORDER.indexOf(a))
+        - (ARCH_ORDER.indexOf(b) < 0 ? 9 : ARCH_ORDER.indexOf(b))
+      );
+      archHost.innerHTML = archOrdered.map(a =>
+        `<span class="pill active" data-arch="${escAttr(a)}">
+          <span class="swatch" style="background:${ARCH_COLORS[a] || "#888"}"></span>
+          ${esc(a)}
+        </span>`
+      ).join("");
+      archOrdered.forEach(a => state.activeArch.add(a));
+      $$(".pill[data-arch]", archHost).forEach(el => {
+        el.addEventListener("click", () => togglePillSet(el, "arch", state.activeArch));
+      });
+
+      // algorithm
+      const algoHost = $("algoFilters");
+      algoHost.innerHTML = state.facets.algorithm.map(a =>
+        `<span class="pill active" data-algo="${escAttr(a)}">${esc(a)}</span>`
+      ).join("");
+      state.facets.algorithm.forEach(a => state.activeAlgo.add(a));
+      $$(".pill[data-algo]", algoHost).forEach(el => {
+        el.addEventListener("click", () => togglePillSet(el, "algo", state.activeAlgo));
+      });
+
+      // reward
+      const rewardHost = $("rewardFilters");
+      rewardHost.innerHTML = state.facets.reward_mode.map(a =>
+        `<span class="pill active" data-reward="${escAttr(a)}">${esc(a)}</span>`
+      ).join("");
+      state.facets.reward_mode.forEach(a => state.activeReward.add(a));
+      $$(".pill[data-reward]", rewardHost).forEach(el => {
+        el.addEventListener("click", () => togglePillSet(el, "reward", state.activeReward));
+      });
+
+      // features (tri-state)
+      const featHost = $("featureFilters");
+      featHost.innerHTML = FEATURE_FLAGS.map(f =>
+        `<span class="tri" data-feat="${f.key}" data-state="any">${esc(f.label)}</span>`
+      ).join("");
+      $$(".tri[data-feat]", featHost).forEach(el => {
+        el.addEventListener("click", () => {
+          const key = el.dataset.feat;
+          const cur = state.features[key];
+          const next = cur === "any" ? "include" : (cur === "include" ? "exclude" : "any");
+          state.features[key] = next;
+          el.dataset.state = next;
+          renderAll();
+        });
+      });
+
+      $("searchInput").addEventListener("input", (e) => {
+        state.search = e.target.value.trim().toLowerCase();
+        renderAll();
+      });
+      $$(".pill[data-group]", $("groupBy")).forEach(el => {
+        el.addEventListener("click", () => {
+          $$(".pill[data-group]", $("groupBy")).forEach(o => o.classList.remove("active"));
+          el.classList.add("active");
+          state.groupBy = el.dataset.group;
+          renderAll();
+        });
+      });
+
+      $("selectAllBtn").addEventListener("click", () => {
+        const vis = visibleVariants();
+        vis.forEach(v => state.selected.add(v.name));
+        updateSelectionUI();
+        renderAll();
+      });
+      $("clearSelectionBtn").addEventListener("click", () => {
+        state.selected.clear();
+        updateSelectionUI();
+        renderAll();
+      });
+      $("resetFiltersBtn").addEventListener("click", () => {
+        state.activeArch = new Set(state.facets.arch);
+        state.activeAlgo = new Set(state.facets.algorithm);
+        state.activeReward = new Set(state.facets.reward_mode);
+        FEATURE_FLAGS.forEach(f => state.features[f.key] = "any");
+        state.search = "";
+        $("searchInput").value = "";
+        $$(".pill[data-arch], .pill[data-algo], .pill[data-reward]").forEach(p => p.classList.add("active"));
+        $$(".tri[data-feat]").forEach(t => t.dataset.state = "any");
+        renderAll();
+      });
+      $("compareBtn").addEventListener("click", openCompareLightbox);
+      $("lbClose").addEventListener("click", closeCompareLightbox);
+      $("lightbox").addEventListener("click", (e) => {
+        if (e.target === $("lightbox")) closeCompareLightbox();
+      });
+      // click on blank canvas (not on a curve/marker) clears the pin
+      $("bigChart").addEventListener("click", (e) => {
+        const t = e.target;
+        if (t === $("bigChart")) {
+          if (state.pinnedVariant) { state.pinnedVariant = null; applyFocusState(); }
+        }
+      });
+      // mouse-tracking crosshair on the compare chart
+      $("bigChart").addEventListener("mousemove", updateChartHover);
+      $("bigChart").addEventListener("mouseleave", hideChartHover);
+      $$(".chart-metric-btn").forEach(b => {
+        b.addEventListener("click", () => {
+          $$(".chart-metric-btn").forEach(o => o.classList.remove("active"));
+          b.classList.add("active");
+          state.compareMetric = b.dataset.metric;
+          renderCompareChart();
+        });
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if ($("lightbox").classList.contains("open") && e.key === "Escape") {
+          closeCompareLightbox();
+          e.preventDefault();
+        }
+      });
+    }
+
+    function togglePillSet(el, key, set) {
+      const val = el.dataset.arch || el.dataset.algo || el.dataset.reward;
+      if (set.has(val)) { set.delete(val); el.classList.remove("active"); }
+      else { set.add(val); el.classList.add("active"); }
+      renderAll();
+    }
+
+    // =========================================================================
+    // filtering
+    // =========================================================================
+    function passesFeatureFlags(v) {
+      for (const f of FEATURE_FLAGS) {
+        const want = state.features[f.key];
+        if (want === "any") continue;
+        const has = !!v.config[f.key];
+        if (want === "include" && !has) return false;
+        if (want === "exclude" && has)  return false;
+      }
+      return true;
+    }
+    function visibleVariants() {
+      const q = state.search;
+      return state.variants.filter(v => {
+        // Arch filter applies only to DQN variants. Baselines have no neural arch
+        // and are governed solely by the algorithm filter.
+        if (v.tags.family !== "baseline" && !state.activeArch.has(v.tags.arch)) return false;
+        if (!state.activeAlgo.has(v.tags.algorithm)) return false;
+        // Reward filter applies only when a reward_mode is meaningful (DQN runs).
+        if (v.tags.family !== "baseline" && v.tags.reward_mode && !state.activeReward.has(v.tags.reward_mode)) return false;
+        if (!passesFeatureFlags(v)) return false;
+        if (q && !v.name.toLowerCase().includes(q)) return false;
+        return true;
+      });
+    }
+
+    function groupKey(v) {
+      const k = state.groupBy;
+      if (k === "none") return "__all";
+      if (k === "arch") return v.tags.family === "baseline" ? "baseline" : v.tags.arch;
+      if (k === "algorithm") return v.tags.algorithm;
+      if (k === "reward_mode") return v.tags.reward_mode || "sparse";
+      return "__all";
+    }
+    function groupLabel(key) {
+      if (key === "__all") return "All variants";
+      if (key === "baseline") return "Baselines";
+      return key;
+    }
+
+    // =========================================================================
+    // render
+    // =========================================================================
+    function renderAll() {
+      const vis = visibleVariants();
+      $("visibleCount").textContent = vis.length;
+      updateSelectionUI();
+
+      if (!vis.length) {
+        $("main").innerHTML = `<div class="empty-state">No variants match the current filters. Try clicking <em>Reset filters</em>.</div>`;
+        return;
+      }
+      // group
+      const groups = new Map();
+      for (const v of vis) {
+        const gk = groupKey(v);
+        if (!groups.has(gk)) groups.set(gk, []);
+        groups.get(gk).push(v);
+      }
+      // section order
+      let keys = Array.from(groups.keys());
+      if (state.groupBy === "arch") {
+        keys.sort((a,b) =>
+          (ARCH_ORDER.indexOf(a) < 0 ? 9 : ARCH_ORDER.indexOf(a))
+          - (ARCH_ORDER.indexOf(b) < 0 ? 9 : ARCH_ORDER.indexOf(b))
+        );
+      } else {
+        keys.sort();
+      }
+
+      const html = keys.map(k => {
+        const items = groups.get(k);
+        const sw = state.groupBy === "arch"
+          ? `<span class="swatch" style="background:${ARCH_COLORS[k] || "#888"}"></span>`
+          : "";
+        const head = state.groupBy === "none"
+          ? ""
+          : `<div class="group-head">
+              <span class="title">${sw}${esc(groupLabel(k))}</span>
+              <span class="count">${items.length} variant${items.length === 1 ? "" : "s"}</span>
+            </div>`;
+        return `<section class="group-section">
+          ${head}
+          <div class="grid-cards">
+            ${items.map(renderCard).join("")}
+          </div>
+        </section>`;
+      }).join("");
+      $("main").innerHTML = html;
+
+      // bind card events
+      $$(".card").forEach(card => {
+        const name = card.dataset.name;
+        const cb = card.querySelector('input[type="checkbox"]');
+        cb.addEventListener("change", () => {
+          if (cb.checked) state.selected.add(name);
+          else state.selected.delete(name);
+          card.classList.toggle("selected", cb.checked);
+          updateSelectionUI();
+        });
+        $$(".chart-toolbar .btn-mini", card).forEach(btn => {
+          btn.addEventListener("click", () => {
+            state.cardMetric.set(name, btn.dataset.metric);
+            $$(".chart-toolbar .btn-mini", card).forEach(o => o.classList.remove("active"));
+            btn.classList.add("active");
+            const svg = card.querySelector(".chart-svg");
+            renderMiniChart(svg, getVariant(name), btn.dataset.metric);
+          });
+        });
+        // examples lazy load
+        const det = card.querySelector("details.examples-zone");
+        if (det) {
+          det.addEventListener("toggle", () => {
+            if (det.open) ensureExamplesLoaded(name, det);
+          });
+        }
+      });
+
+      // render mini charts
+      $$(".card").forEach(card => {
+        const name = card.dataset.name;
+        const svg = card.querySelector(".chart-svg");
+        const metric = state.cardMetric.get(name) || "success_rate";
+        renderMiniChart(svg, getVariant(name), metric);
+      });
+    }
+
+    function getVariant(name) {
+      return state.variants.find(v => v.name === name);
+    }
+
+    function renderCard(v) {
+      const checked = state.selected.has(v.name);
+      const metric = state.cardMetric.get(v.name) || "success_rate";
+      const arch = v.tags.arch;
+      const isBaseline = v.tags.family === "baseline";
+
+      // Unified tag schema across every card:
+      //   slot 1 (arch)     — coloured by arch family; baselines get a gray "baseline" tag
+      //   slot 2 (kind)     — DQN: reward mode (sparse/shaped); baselines: oracle/random
+      //   slot 3+ (features)— DQN add-on flags only
+      //   slot last         — pending placeholder when curve data is missing
+      let archBadge, kindBadge;
+      if (isBaseline) {
+        archBadge = `<span class="badge arch-baseline">baseline</span>`;
+        const sub = v.tags.algorithm.replace(/^baseline_/, "") || v.tags.algorithm;
+        kindBadge = `<span class="badge kind-baseline">${esc(sub)}</span>`;
+      } else {
+        archBadge = `<span class="badge arch-${arch}">${esc(arch)}</span>`;
+        const rewardCls = v.tags.reward_mode === "shaped" ? "reward-shaped" : "reward-sparse";
+        kindBadge = v.tags.reward_mode
+          ? `<span class="badge ${rewardCls}">${esc(v.tags.reward_mode)}</span>`
+          : "";
+      }
+      const featureBadges = v.tags.features
+        .map(f => `<span class="badge feat">${esc(f)}</span>`).join("");
+      const pending = !v.curve || v.curve.length === 0;
+      const pendingBadge = pending ? `<span class="badge pending">pending</span>` : "";
+
+      // metric formatting helpers
+      const s = v.summary || {};
+      const meanSCls = s.mean_success >= 0.9 ? "good" : (s.mean_success != null && s.mean_success < 0.4 ? "warn" : "");
+      const maxSolvedCls = s.max_solved_len == null ? "muted" : "good";
+      const firstFailCls = s.first_failure_len == null ? "good" : "warn";
+
+      return `
+        <div class="card ${checked ? "selected" : ""} ${pending ? "pending" : ""}" data-name="${escAttr(v.name)}">
+          <div class="card-head">
+            <input type="checkbox" ${checked ? "checked" : ""} title="Select for comparison" />
+            <span class="card-name" title="${escAttr(v.name)}">${esc(v.name)}</span>
+            ${archBadge}
+            ${kindBadge}
+            ${featureBadges}
+            ${pendingBadge}
+          </div>
+          <div class="card-body">
+            <div class="stats-grid">
+              <div class="stat-row"><span class="label">algorithm</span><span class="val">${esc(v.tags.algorithm)}</span></div>
+              <div class="stat-row"><span class="label">mean success</span><span class="val ${meanSCls}">${fmtPct(s.mean_success)}</span></div>
+              <div class="stat-row"><span class="label">mean bit-acc</span><span class="val">${fmtPct(s.mean_bit_accuracy)}</span></div>
+              <div class="stat-row"><span class="label">mean prefix-acc</span><span class="val">${fmtPct(s.mean_prefix_accuracy)}</span></div>
+              <div class="stat-row"><span class="label">max solved n (≥90%)</span><span class="val ${maxSolvedCls}">${s.max_solved_len ?? "—"}</span></div>
+              <div class="stat-row"><span class="label">first failure n</span><span class="val ${firstFailCls}">${s.first_failure_len ?? "—"}</span></div>
+            </div>
+            <div class="chart-box">
+              <div class="chart-toolbar">
+                <button class="btn-mini ${metric === "success_rate"    ? "active" : ""}" data-metric="success_rate"    type="button">success</button>
+                <button class="btn-mini ${metric === "bit_accuracy"    ? "active" : ""}" data-metric="bit_accuracy"    type="button">bit</button>
+                <button class="btn-mini ${metric === "prefix_accuracy" ? "active" : ""}" data-metric="prefix_accuracy" type="button">prefix</button>
+              </div>
+              <svg class="chart-svg" viewBox="0 0 360 170" preserveAspectRatio="none"></svg>
+            </div>
+          </div>
+          <details class="examples-zone">
+            <summary>examples &middot; bucketed by sequence_length</summary>
+            <div class="examples-body" data-state="empty">
+              <div class="examples-loading">Loaded on expand&hellip;</div>
+            </div>
+          </details>
+        </div>
+      `;
+    }
+
+    function updateSelectionUI() {
+      $("selectedCount").textContent = state.selected.size;
+      $("compareBtn").disabled = state.selected.size < 2;
+    }
+
+    // =========================================================================
+    // mini chart (single variant)
+    // =========================================================================
+    const METRIC_LABEL = {
+      success_rate: "success rate",
+      bit_accuracy: "bit accuracy",
+      prefix_accuracy: "prefix accuracy",
+    };
+
+    function renderMiniChart(svg, v, metric) {
+      const rows = v.curve || [];
+      svg.innerHTML = "";
+      const W = 360, H = 170;
+      const padL = 28, padR = 8, padT = 16, padB = 22;
+      const innerW = W - padL - padR;
+      const innerH = H - padT - padB;
+      if (!rows.length) {
+        svg.innerHTML = `<text class="chart-label" x="${W/2}" y="${H/2}" text-anchor="middle">no curve data</text>`;
+        return;
+      }
+      const xs = rows.map(r => r.sequence_length);
+      const xMin = Math.min(...xs), xMax = Math.max(...xs);
+      const xScale = (x) => padL + ((x - xMin) / Math.max(1, (xMax - xMin))) * innerW;
+      const yScale = (y) => padT + (1 - y) * innerH;
+
+      // grid + axis
+      const yTicks = [0, 0.25, 0.5, 0.75, 1];
+      let gridHtml = "";
+      for (const t of yTicks) {
+        const y = yScale(t);
+        gridHtml += `<line class="chart-grid" x1="${padL}" y1="${y}" x2="${padL+innerW}" y2="${y}" />`;
+        gridHtml += `<text class="chart-tick" x="${padL - 4}" y="${y + 3}" text-anchor="end">${t.toFixed(2)}</text>`;
+      }
+      // x ticks: at most 6 ticks
+      const tickStep = Math.max(1, Math.ceil((xMax - xMin) / 5));
+      let xTicksHtml = "";
+      for (let t = xMin; t <= xMax; t += tickStep) {
+        const x = xScale(t);
+        xTicksHtml += `<line class="chart-grid" x1="${x}" y1="${padT}" x2="${x}" y2="${padT+innerH}" />`;
+        xTicksHtml += `<text class="chart-tick" x="${x}" y="${padT+innerH+12}" text-anchor="middle">${t}</text>`;
+      }
+
+      const archColor = ARCH_COLORS[v.tags.arch] || "#1f4e79";
+      const pts = rows.map(r => `${xScale(r.sequence_length)},${yScale(r[metric])}`).join(" ");
+      const area = `M ${xScale(xs[0])},${yScale(0)} L ` + rows.map(r => `${xScale(r.sequence_length)},${yScale(r[metric])}`).join(" L ") + ` L ${xScale(xs[xs.length-1])},${yScale(0)} Z`;
+      const lastVal = rows[rows.length - 1][metric];
+
+      svg.innerHTML = `
+        ${gridHtml}
+        ${xTicksHtml}
+        <line class="chart-axis" x1="${padL}" y1="${padT+innerH}" x2="${padL+innerW}" y2="${padT+innerH}" />
+        <line class="chart-axis" x1="${padL}" y1="${padT}"        x2="${padL}"        y2="${padT+innerH}" />
+        <path d="${area}" fill="${archColor}" fill-opacity="0.08" />
+        <polyline points="${pts}" fill="none" stroke="${archColor}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" />
+        <text class="chart-title" x="${padL}" y="${padT - 4}">${esc(METRIC_LABEL[metric])} vs n</text>
+        <text class="chart-tick" x="${padL+innerW}" y="${padT - 4}" text-anchor="end">last = ${fmt(lastVal)}</text>
+      `;
+    }
+
+    // =========================================================================
+    // examples (lazy load)
+    // =========================================================================
+    async function ensureExamplesLoaded(name, det) {
+      const body = det.querySelector(".examples-body");
+      const cur = state.examplesCache.get(name);
+      if (cur && cur !== "loading" && !String(cur).startsWith("error:")) {
+        return;
+      }
+      if (cur === "loading") return;
+      body.innerHTML = `<div class="examples-loading">Loading examples.json&hellip;</div>`;
+      state.examplesCache.set(name, "loading");
+      try {
+        const payload = await fetchJson(`api/examples/${encodeURIComponent(name)}.json`);
+        if (payload.error) throw new Error(payload.error);
+        state.examplesCache.set(name, payload.examples || {});
+        renderExamples(name, body);
+      } catch (err) {
+        state.examplesCache.set(name, "error:" + (err.message || err));
+        body.innerHTML = `<div class="examples-error">Failed to load: ${esc(err.message || err)}</div>`;
+      }
+    }
+
+    function diffMaskHtml(target, generated) {
+      const len = Math.min(target.length, generated.length);
+      let out = "";
+      for (let i = 0; i < len; i++) {
+        const g = generated[i] ?? "·";
+        if (target[i] === g) out += `<span class="bit-hit">${esc(g)}</span>`;
+        else out += `<span class="bit-mis">${esc(g)}</span>`;
+      }
+      if (generated.length > len) out += `<span class="bit-mis">${esc(generated.slice(len))}</span>`;
+      return out;
+    }
+
+    function renderExamples(name, host) {
+      const data = state.examplesCache.get(name) || {};
+      // data is {[sequence_length]: [{sample_id, target, generated, match_mask, bit_accuracy, prefix_accuracy, success_rate}]}
+      const keys = Object.keys(data).map(k => Number(k)).filter(k => Number.isFinite(k)).sort((a,b) => a - b);
+      if (!keys.length) {
+        host.innerHTML = `<div class="examples-loading">No examples available.</div>`;
+        return;
+      }
+      const html = keys.map(k => {
+        const arr = data[String(k)] || data[k] || [];
+        const successCount = arr.filter(s => Number(s.success_rate) >= 0.9999).length;
+        const total = arr.length;
+        const rate = total ? successCount / total : 0;
+        const rateCls = rate >= 0.9 ? "good" : (rate <= 0.1 ? "warn" : "");
+        const rows = arr.map((s, i) => {
+          const isHit = Number(s.success_rate) >= 0.9999;
+          const cls = isHit ? "ok" : "fail";
+          const pill = isHit
+            ? `<span class="hit-pill ok">hit</span>`
+            : `<span class="hit-pill fail">miss</span>`;
+          return `<div class="sample-row ${cls}">
+            <div class="sample-col num">${i + 1}</div>
+            <div class="sample-col stats">
+              ${pill}
+              <span class="score"><span class="lbl">bit</span>${fmt(s.bit_accuracy, 2)}</span>
+              <span class="score"><span class="lbl">pre</span>${fmt(s.prefix_accuracy, 2)}</span>
+            </div>
+            <div class="sample-col bits">
+              <div class="bitrow"><span class="lbl">tgt</span>${esc(s.target ?? "")}</div>
+              <div class="bitrow"><span class="lbl">gen</span>${diffMaskHtml(s.target ?? "", s.generated ?? "")}</div>
+            </div>
+          </div>`;
+        }).join("");
+        const head = `<div class="sample-row head">
+          <div class="sample-col num">#</div>
+          <div class="sample-col stats">status &middot; scores</div>
+          <div class="sample-col bits">target / generated (mismatches red)</div>
+        </div>`;
+        return `<details class="bucket">
+          <summary class="bucket-head">
+            <span class="bucket-label">n = <span class="bucket-len">${k}</span> &middot; ${total} sample${total === 1 ? "" : "s"}</span>
+            <span class="bucket-rate ${rateCls}">${successCount}/${total} exact &middot; ${fmtPct(rate)}</span>
+          </summary>
+          <div class="bucket-body">${rows
+            ? `<div class="sample-list">${head}${rows}</div>`
+            : "<div class='examples-loading'>(empty)</div>"
+          }</div>
+        </details>`;
+      }).join("");
+      host.dataset.state = "loaded";
+      host.innerHTML = html;
+    }
+
+    // =========================================================================
+    // compare lightbox
+    // =========================================================================
+    function openCompareLightbox() {
+      if (state.selected.size < 2) {
+        toast("Select at least 2 variants to compare");
+        return;
+      }
+      state.focusVariant = null;
+      state.pinnedVariant = null;
+      $("lightbox").classList.add("open");
+      $("lightbox").setAttribute("aria-hidden", "false");
+      renderCompareChart();
+    }
+    function closeCompareLightbox() {
+      $("lightbox").classList.remove("open");
+      $("lightbox").setAttribute("aria-hidden", "true");
+      state.focusVariant = null;
+      state.pinnedVariant = null;
+      hideChartHover();
+    }
+
+    // CSS-safe id (variant name may contain ., -, _ which are all CSS-safe anyway,
+    // but we still escape for selector use)
+    function variantSlug(name) {
+      return name.replace(/[^A-Za-z0-9_-]/g, "_");
+    }
+
+    function applyFocusState() {
+      const svg = $("bigChart");
+      const focus = state.focusVariant || state.pinnedVariant;
+      const items = $$("#legendList .legend-item");
+      const curves = $$("#bigChart .curve");
+      const markers = $$("#bigChart .marker");
+      const tip = $("chartTip");
+      if (!focus) {
+        svg.classList.remove("has-focus");
+        items.forEach(el => { el.classList.remove("dim"); el.classList.remove("hi"); });
+        curves.forEach(el => { el.classList.remove("dim"); el.classList.remove("hi"); });
+        markers.forEach(el => { el.classList.remove("dim"); el.classList.remove("hi"); });
+        items.forEach(el => el.classList.toggle("pinned", el.dataset.name === state.pinnedVariant));
+        if (tip) { tip.style.display = "none"; tip.innerHTML = ""; }
+        hideChartHover();
+        return;
+      }
+      svg.classList.add("has-focus");
+      const focusSlug = variantSlug(focus);
+      items.forEach(el => {
+        const isFocus = el.dataset.name === focus;
+        el.classList.toggle("dim", !isFocus);
+        el.classList.toggle("hi", isFocus);
+        el.classList.toggle("pinned", el.dataset.name === state.pinnedVariant);
+      });
+      curves.forEach(el => {
+        const isFocus = el.dataset.slug === focusSlug;
+        el.classList.toggle("dim", !isFocus);
+        el.classList.toggle("hi", isFocus);
+      });
+      markers.forEach(el => {
+        const isFocus = el.dataset.slug === focusSlug;
+        el.classList.toggle("dim", !isFocus);
+        el.classList.toggle("hi", isFocus);
+      });
+      const focusCurve = svg.querySelector(`.curve[data-slug="${focusSlug}"]`);
+      if (focusCurve && focusCurve.parentNode) focusCurve.parentNode.appendChild(focusCurve);
+      svg.querySelectorAll(`.marker[data-slug="${focusSlug}"]`).forEach(m => m.parentNode.appendChild(m));
+      const hov = $("chartHover");
+      if (hov) hov.parentNode.appendChild(hov);
+      if (tip) tip.parentNode.appendChild(tip);
+      renderChartTip(focus);
+    }
+
+    function renderChartTip(name) {
+      const tip = $("chartTip");
+      const cmp = state.lastCompare;
+      if (!tip || !cmp) return;
+      const entry = cmp.colored.find(c => c.variant.name === name);
+      if (!entry) { tip.style.display = "none"; return; }
+      const v = entry.variant;
+      const s = v.summary || {};
+      const isPinned = state.pinnedVariant === name;
+      const archLabel = v.tags.family === "baseline" ? v.tags.algorithm : v.tags.arch;
+      const last = (v.curve && v.curve.length) ? v.curve[v.curve.length - 1][cmp.metric] : null;
+      const rows = [
+        ["mean success", fmtPct(s.mean_success)],
+        ["mean bit-acc", fmtPct(s.mean_bit_accuracy)],
+        ["mean prefix-acc", fmtPct(s.mean_prefix_accuracy)],
+        ["max solved n (≥90%)", s.max_solved_len == null ? "—" : String(s.max_solved_len)],
+        ["first failure n", s.first_failure_len == null ? "—" : String(s.first_failure_len)],
+        [`last ${METRIC_LABEL[cmp.metric]}`, fmt(last)],
+      ];
+      // Layout: title (variant + arch), separator, key:value rows.
+      const padX = 12, padY = 10, lineH = 16, titleH = 22;
+      const boxW = 320;
+      const boxH = padY * 2 + titleH + rows.length * lineH + 6;
+      // Most curves end at the right edge of the chart, so anchor the tooltip
+      // to the upper-left of the inner area for predictable, non-overlapping placement.
+      const x = cmp.padL + 12;
+      const y = cmp.padT + 10;
+      let html = `
+        <rect class="chart-tip-bg" x="${x}" y="${y}" width="${boxW}" height="${boxH}" rx="8" ry="8" />
+        <rect x="${x + padX - 4}" y="${y + padY + 3}" width="3" height="${titleH - 6}" rx="1.5" ry="1.5" fill="${entry.color}" />
+        <text class="chart-tip-title" x="${x + padX + 4}" y="${y + padY + 14}">${esc(v.name)}</text>
+        <text class="chart-tip-arch"  x="${x + padX + 4}" y="${y + padY + titleH + 4}">${esc(archLabel)}${isPinned ? " · pinned" : ""}</text>
+        <line x1="${x + padX}" y1="${y + padY + titleH + 10}" x2="${x + boxW - padX}" y2="${y + padY + titleH + 10}" stroke="rgba(255,255,255,0.14)" stroke-width="0.6" />
+      `;
+      let yy = y + padY + titleH + 24;
+      for (const [k, val] of rows) {
+        html += `<text class="chart-tip-key" x="${x + padX}" y="${yy}">${esc(k)}</text>`;
+        html += `<text class="chart-tip-row" x="${x + boxW - padX}" y="${yy}" text-anchor="end">${esc(val)}</text>`;
+        yy += lineH;
+      }
+      tip.innerHTML = html;
+      tip.style.display = "";
+    }
+
+    function hideChartHover() {
+      const hov = $("chartHover");
+      if (hov) { hov.style.display = "none"; hov.innerHTML = ""; }
+    }
+
+    /**
+     * Track the mouse over the compare chart: snap to the nearest data point on
+     * the currently focused variant's curve, draw a crosshair + (n, value) bubble.
+     */
+    function updateChartHover(evt) {
+      const cmp = state.lastCompare;
+      const svg = $("bigChart");
+      const hov = $("chartHover");
+      const focus = state.focusVariant || state.pinnedVariant;
+      if (!svg || !hov || !cmp || !focus) { hideChartHover(); return; }
+      const entry = cmp.colored.find(c => c.variant.name === focus);
+      if (!entry || !entry.variant.curve || !entry.variant.curve.length) { hideChartHover(); return; }
+
+      // Map client → viewBox coordinates (works with preserveAspectRatio).
+      const ctm = svg.getScreenCTM();
+      if (!ctm) { hideChartHover(); return; }
+      const pt = svg.createSVGPoint();
+      pt.x = evt.clientX; pt.y = evt.clientY;
+      const local = pt.matrixTransform(ctm.inverse());
+      if (local.x < cmp.padL || local.x > cmp.padL + cmp.innerW ||
+          local.y < cmp.padT || local.y > cmp.padT + cmp.innerH) {
+        hideChartHover(); return;
+      }
+
+      const span = Math.max(1, cmp.xMax - cmp.xMin);
+      const xScale = (x) => cmp.padL + ((x - cmp.xMin) / span) * cmp.innerW;
+      const yScale = (y) => cmp.padT + (1 - y) * cmp.innerH;
+      const rows = entry.variant.curve;
+      let best = 0, bestDx = Infinity;
+      for (let i = 0; i < rows.length; i++) {
+        const dx = Math.abs(xScale(rows[i].sequence_length) - local.x);
+        if (dx < bestDx) { bestDx = dx; best = i; }
+      }
+      const row = rows[best];
+      const val = row[cmp.metric];
+      const cx = xScale(row.sequence_length);
+      const cy = yScale(val);
+      const color = entry.color;
+
+      // Build value bubble; flip to left of the point if it would overflow right edge.
+      const bw = 84, bh = 30;
+      const wantLeft = cx + 12 + bw > cmp.padL + cmp.innerW;
+      const bx = wantLeft ? cx - 12 - bw : cx + 12;
+      const byRaw = cy - bh - 8;
+      const by = Math.max(cmp.padT + 2, Math.min(cmp.padT + cmp.innerH - bh - 2, byRaw < cmp.padT + 2 ? cy + 12 : byRaw));
+      const valStr = cmp.metric === "success_rate" ? fmtPct(val) : fmt(val, 3);
+
+      hov.innerHTML = `
+        <line class="chart-hover-line" x1="${cx}" y1="${cmp.padT}" x2="${cx}" y2="${cmp.padT + cmp.innerH}" stroke="${color}" />
+        <line class="chart-hover-line" x1="${cmp.padL}" y1="${cy}" x2="${cmp.padL + cmp.innerW}" y2="${cy}" stroke="${color}" opacity="0.35" />
+        <circle class="chart-hover-ring" cx="${cx}" cy="${cy}" r="6" stroke="${color}" />
+        <circle class="chart-hover-dot"  cx="${cx}" cy="${cy}" r="2.6" fill="${color}" />
+        <rect class="chart-hover-bg" x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="5" ry="5" />
+        <text class="chart-hover-k" x="${bx + bw/2}" y="${by + 12}" text-anchor="middle">n = ${row.sequence_length}</text>
+        <text class="chart-hover-t b" x="${bx + bw/2}" y="${by + 24}" text-anchor="middle">${esc(valStr)}</text>
+      `;
+      hov.style.display = "";
+    }
+
+    // distinct color per variant, biased by arch hue
+    function colorFor(v, idxWithinArch) {
+      const base = ARCH_COLORS[v.tags.arch] || "#1f4e79";
+      // shift lightness via HSL
+      const {h, s, l} = hexToHsl(base);
+      const li = Math.max(22, Math.min(70, l - 6 + idxWithinArch * 8));
+      return hslToHex(h, s, li);
+    }
+    function hexToHsl(hex) {
+      const m = hex.replace("#", "");
+      const r = parseInt(m.slice(0,2), 16) / 255;
+      const g = parseInt(m.slice(2,4), 16) / 255;
+      const b = parseInt(m.slice(4,6), 16) / 255;
+      const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+      let h = 0, s = 0; const l = (mx + mn) / 2;
+      if (mx !== mn) {
+        const d = mx - mn;
+        s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+        switch (mx) {
+          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+          case g: h = (b - r) / d + 2; break;
+          case b: h = (r - g) / d + 4; break;
+        }
+        h *= 60;
+      }
+      return {h, s: s*100, l: l*100};
+    }
+    function hslToHex(h, s, l) {
+      s /= 100; l /= 100;
+      const k = (n) => (n + h / 30) % 12;
+      const a = s * Math.min(l, 1 - l);
+      const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+      const to255 = (x) => Math.round(255 * x).toString(16).padStart(2, "0");
+      return `#${to255(f(0))}${to255(f(8))}${to255(f(4))}`;
+    }
+
+    function renderCompareChart() {
+      const selected = Array.from(state.selected).map(getVariant).filter(Boolean);
+      if (!selected.length) return;
+      // group by arch to compute per-arch index for color shift
+      const archIdx = new Map();
+      const colored = selected.map(v => {
+        const idx = (archIdx.get(v.tags.arch) || 0);
+        archIdx.set(v.tags.arch, idx + 1);
+        return {variant: v, color: colorFor(v, idx)};
+      });
+
+      const metric = state.compareMetric;
+      $("lbTitle").textContent = `${METRIC_LABEL[metric]} vs. sequence length`;
+      $("lbSub").textContent = `${selected.length} variants overlaid`;
+
+      const svg = $("bigChart");
+      const W = 1200, H = 540;
+      const padL = 70, padR = 28, padT = 42, padB = 56;
+      const innerW = W - padL - padR;
+      const innerH = H - padT - padB;
+
+      // collect range
+      let xMin = Infinity, xMax = -Infinity;
+      for (const {variant} of colored) {
+        for (const r of (variant.curve || [])) {
+          if (r.sequence_length < xMin) xMin = r.sequence_length;
+          if (r.sequence_length > xMax) xMax = r.sequence_length;
+        }
+      }
+      if (!Number.isFinite(xMin)) { xMin = 1; xMax = 50; }
+      const xScale = (x) => padL + ((x - xMin) / Math.max(1, (xMax - xMin))) * innerW;
+      const yScale = (y) => padT + (1 - y) * innerH;
+
+      // grid
+      let gridHtml = "";
+      const yTicks = [0, 0.2, 0.4, 0.6, 0.8, 1.0];
+      for (const t of yTicks) {
+        const y = yScale(t);
+        gridHtml += `<line class="chart-grid" x1="${padL}" y1="${y}" x2="${padL+innerW}" y2="${y}" />`;
+        gridHtml += `<text class="chart-tick" x="${padL - 8}" y="${y + 4}" text-anchor="end">${t.toFixed(1)}</text>`;
+      }
+      const tickStep = Math.max(1, Math.ceil((xMax - xMin) / 8));
+      for (let t = xMin; t <= xMax; t += tickStep) {
+        const x = xScale(t);
+        gridHtml += `<line class="chart-grid" x1="${x}" y1="${padT}" x2="${x}" y2="${padT+innerH}" />`;
+        gridHtml += `<text class="chart-tick" x="${x}" y="${padT+innerH+16}" text-anchor="middle">${t}</text>`;
+      }
+
+      // lines + markers, tagged with variant slug for hover interaction
+      let linesHtml = "";
+      let markersHtml = "";
+      for (const {variant, color} of colored) {
+        const rows = variant.curve || [];
+        if (!rows.length) continue;
+        const slug = variantSlug(variant.name);
+        const pts = rows.map(r => `${xScale(r.sequence_length)},${yScale(r[metric])}`).join(" ");
+        linesHtml += `<polyline class="curve" data-slug="${escAttr(slug)}" data-name="${escAttr(variant.name)}" points="${pts}" fill="none" stroke="${color}" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round" />`;
+        for (const r of rows) {
+          markersHtml += `<circle class="marker" data-slug="${escAttr(slug)}" data-name="${escAttr(variant.name)}" cx="${xScale(r.sequence_length)}" cy="${yScale(r[metric])}" r="1.7" fill="${color}" opacity="0.85" />`;
+        }
+      }
+
+      svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+      svg.innerHTML = `
+        ${gridHtml}
+        <line class="chart-axis" x1="${padL}" y1="${padT+innerH}" x2="${padL+innerW}" y2="${padT+innerH}" />
+        <line class="chart-axis" x1="${padL}" y1="${padT}"        x2="${padL}"        y2="${padT+innerH}" />
+        <text class="chart-title" x="${padL+innerW/2}" y="${padT - 16}" text-anchor="middle">${esc(METRIC_LABEL[metric])} vs. sequence length n</text>
+        <text class="chart-label" x="${padL+innerW/2}" y="${H - 14}" text-anchor="middle">sequence length n</text>
+        <text class="chart-label" x="${22}" y="${padT+innerH/2}" text-anchor="middle" transform="rotate(-90 22 ${padT+innerH/2})">${esc(METRIC_LABEL[metric])}</text>
+        <g class="markers-layer">${markersHtml}</g>
+        <g class="curves-layer">${linesHtml}</g>
+        <g id="chartHover" style="display:none; pointer-events:none;"></g>
+        <g id="chartTip"   style="display:none; pointer-events:none;"></g>
+      `;
+
+      // Remember chart geometry & coloured set for the focus tooltip + mouse crosshair.
+      state.lastCompare = {colored, metric, W, H, padL, padR, padT, padB, innerW, innerH, xMin, xMax};
+
+      // legend
+      $("legendList").innerHTML = `
+        <div class="legend-hint">Hover a curve or row to highlight; click to pin. Click empty canvas to unpin.</div>
+      ` + colored.map(({variant, color}) => {
+        const s = variant.summary || {};
+        const last = (variant.curve && variant.curve.length)
+          ? variant.curve[variant.curve.length - 1][metric]
+          : null;
+        const archLabel = variant.tags.family === "baseline"
+          ? variant.tags.algorithm
+          : variant.tags.arch;
+        return `
+          <div class="legend-item" data-name="${escAttr(variant.name)}" title="${escAttr(variant.name)} · ${escAttr(archLabel)}">
+            <span class="legend-swatch" style="background:${color}"></span>
+            <span class="legend-name">${esc(variant.name)}</span>
+            <span class="legend-arch">${esc(archLabel)}</span>
+            <div class="legend-meta">
+              <span class="meta-kv">mean&nbsp;<b>${fmtPct(s.mean_success)}</b></span>
+              <span class="meta-kv">max&nbsp;solved&nbsp;<b>${s.max_solved_len ?? "—"}</b></span>
+              <span class="meta-kv">first&nbsp;fail&nbsp;<b>${s.first_failure_len ?? "—"}</b></span>
+              <span class="meta-kv">last&nbsp;${esc(METRIC_LABEL[metric].replace(' rate','').replace(' accuracy','-acc'))}&nbsp;<b>${fmt(last)}</b></span>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      // Bind hover / click interactions
+      $$("#legendList .legend-item").forEach(el => {
+        el.addEventListener("mouseenter", () => { state.focusVariant = el.dataset.name; applyFocusState(); });
+        el.addEventListener("mouseleave", () => { state.focusVariant = null; applyFocusState(); });
+        el.addEventListener("click", () => {
+          state.pinnedVariant = (state.pinnedVariant === el.dataset.name) ? null : el.dataset.name;
+          applyFocusState();
+        });
+      });
+      $$("#bigChart .curve, #bigChart .marker").forEach(el => {
+        el.style.cursor = "pointer";
+        el.addEventListener("mouseenter", () => { state.focusVariant = el.dataset.name; applyFocusState(); });
+        el.addEventListener("mouseleave", () => { state.focusVariant = null; applyFocusState(); });
+        el.addEventListener("click", (e) => {
+          e.stopPropagation();
+          state.pinnedVariant = (state.pinnedVariant === el.dataset.name) ? null : el.dataset.name;
+          applyFocusState();
+        });
+      });
+      applyFocusState();
+    }
+
+    bootstrap();
+  </script>
+</body>
+</html>
