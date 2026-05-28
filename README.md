@@ -159,7 +159,7 @@ Run all 23 in parallel (one log file per script under
 
 ```bash
 bash scripts/runs/launch_all.sh
-
+```
 ---
 
 ## 5. Outputs
