@@ -16,8 +16,10 @@ export http_proxy="http://hk-mmhttpproxy.woa.com:11113"
 export https_proxy="$http_proxy"
 export all_proxy="$http_proxy"
 
+WANDB_API_KEY="your wandb api key"
 if [[ -z "${WANDB_API_KEY:-}" ]]; then
-  export WANDB_API_KEY="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"
+  echo "WANDB_API_KEY is not set"
+  exit 1
 fi
 
 cd "$REPO_ROOT"
