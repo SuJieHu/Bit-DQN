@@ -1,0 +1,14 @@
+# MLP ablation: only Prioritized Experience Replay turned on.
+# Transitions are sampled with probability proportional to |TD-error|^alpha
+# and corrected with importance-sampling weights.
+extends: default.yaml
+
+variant: mlp_per
+algorithm: dqn
+
+arch: mlp
+reward_mode: sparse
+double_dqn: false
+dueling: false
+per: true
+her: false

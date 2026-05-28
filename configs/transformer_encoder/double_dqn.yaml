@@ -1,0 +1,11 @@
+# Transformer ablation: only Double DQN turned on.
+extends: transformer_encoder/_base.yaml
+
+variant: transformer_encoder_double_dqn
+algorithm: dqn
+
+reward_mode: sparse
+double_dqn: true
+dueling: false
+per: false
+her: false

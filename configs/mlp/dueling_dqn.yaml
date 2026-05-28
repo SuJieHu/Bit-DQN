@@ -1,0 +1,14 @@
+# MLP ablation: only Dueling Q-network turned on.
+# Q(s,a) = V(s) + A(s,a) - mean_a A(s,a). Helps when only a subset of actions
+# meaningfully changes the value.
+extends: default.yaml
+
+variant: mlp_dueling_dqn
+algorithm: dqn
+
+arch: mlp
+reward_mode: sparse
+double_dqn: false
+dueling: true
+per: false
+her: false

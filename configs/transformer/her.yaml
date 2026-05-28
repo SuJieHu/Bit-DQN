@@ -1,0 +1,14 @@
+# Decoder ablation: only Hindsight Experience Replay turned on.
+# Pair against transformer_her to see whether causal mask + cross-attention
+# + HER alone approaches the encoder's near-1.0 mark.
+extends: transformer/_base.yaml
+
+variant: transformer_her
+algorithm: dqn
+
+reward_mode: sparse
+double_dqn: false
+dueling: false
+per: false
+her: true
+her_ratio: 1.0

@@ -1,0 +1,16 @@
+# MLP "kitchen sink": all five improvements (reward shaping + Double DQN +
+# Dueling network + PER + HER) on top of the MLP backbone. This is the
+# "improved version" Task 3 asks for, restricted to MLP. Compared 1-vs-1
+# against mlp_basic_dqn (control) and against transformer_improved.
+extends: default.yaml
+
+variant: mlp_improved
+algorithm: dqn
+
+arch: mlp
+reward_mode: shaped
+double_dqn: true
+dueling: true
+per: true
+her: true
+her_ratio: 1.0

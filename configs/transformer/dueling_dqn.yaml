@@ -1,0 +1,12 @@
+# Decoder ablation: only Dueling head turned on.
+# Pair against transformer_dueling_dqn.
+extends: transformer/_base.yaml
+
+variant: transformer_dueling_dqn
+algorithm: dqn
+
+reward_mode: sparse
+double_dqn: false
+dueling: true
+per: false
+her: false

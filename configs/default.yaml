@@ -1,0 +1,70 @@
+# Default base configuration. Every other config inherits from this and
+# overrides only the fields it needs. Keys here are the canonical names used
+# throughout src/.
+
+variant: basic_dqn          # short name used as result folder & wandb run name
+algorithm: dqn              # one of {dqn, baseline_random, baseline_oracle}
+
+# ----- length sweep -----
+# We train one model for every n in [1, max_sequence_length].
+# Each n produces one training curve. So max_sequence_length=50 yields 50 curves.
+max_sequence_length: 50
+min_sequence_length: 1
+
+# ----- training schedule -----
+# episodes:        how many training episodes per n. One episode = generate one
+#                  full bit sequence of length n.
+# eval_episodes:   how many evaluation episodes (random targets) used to
+#                  estimate success rate at every evaluation point.
+# eval_interval:   how often (in training episodes) we run an evaluation pass.
+episodes: 1200
+eval_episodes: 200
+eval_interval: 100
+
+# ----- core hyperparameters -----
+seed: 42
+hidden_dim: 128
+# ----- architecture -----
+# arch: mlp                 -> 2-layer MLP head (default; matches all earlier results)
+# arch: transformer_encoder -> encoder-only self-attention over n tokens
+# arch: transformer         -> full seq2seq Transformer (target encoder + causal
+#                              decoder with cross-attention)
+arch: mlp
+transformer_heads: 4
+transformer_layers: 2
+transformer_dropout: 0.0
+lr: 1.0e-3
+gamma: 0.98
+batch_size: 64
+buffer_size: 20000
+min_buffer_size: 500
+target_update_interval: 200
+
+# ----- exploration -----
+epsilon_start: 1.0
+epsilon_end: 0.05
+epsilon_decay_steps: 5000
+
+# ----- reward -----
+# sparse: +1 at the end iff sequence == target, 0 otherwise.
+# shaped: per-step bit-level signal plus terminal bonus / penalty.
+reward_mode: sparse
+
+# ----- algorithmic switches -----
+double_dqn: false
+dueling: false
+per: false
+her: false
+her_ratio: 0.5
+
+# ----- misc -----
+device: auto                # auto | cpu | cuda
+results_dir: results
+run_name: bit-dqn
+save_examples: 12
+
+# ----- wandb -----
+use_wandb: true
+wandb_project: bit-sequence-dqn
+wandb_entity: issja-tsinghua-university
+wandb_group: null

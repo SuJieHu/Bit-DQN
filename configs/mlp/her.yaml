@@ -1,0 +1,16 @@
+# MLP ablation: only Hindsight Experience Replay turned on.
+# After a failed episode, relabel the goal to the bits the agent actually
+# generated; the relabeled trajectory is a "success" for that fake goal.
+# Single most important trick for very large n.
+extends: default.yaml
+
+variant: mlp_her
+algorithm: dqn
+
+arch: mlp
+reward_mode: sparse
+double_dqn: false
+dueling: false
+per: false
+her: true
+her_ratio: 1.0

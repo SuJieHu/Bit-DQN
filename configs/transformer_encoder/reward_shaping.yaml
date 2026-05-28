@@ -1,0 +1,12 @@
+# Transformer ablation: only reward shaping turned on.
+# Isolates how much of transformer_improved's gain comes from dense reward.
+extends: transformer_encoder/_base.yaml
+
+variant: transformer_encoder_reward_shaping
+algorithm: dqn
+
+reward_mode: shaped
+double_dqn: false
+dueling: false
+per: false
+her: false

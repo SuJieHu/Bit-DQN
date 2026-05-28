@@ -1,0 +1,9 @@
+# Oracle baseline: at every position copy the target bit directly.
+# This is the upper bound on success rate (should be ~100% modulo noise).
+extends: default.yaml
+
+variant: baseline_oracle
+algorithm: baseline_oracle
+
+episodes: 0
+eval_episodes: 1000

@@ -1,0 +1,13 @@
+# MLP base = vanilla DQN: 2-layer MLP, sparse reward, no improvements.
+# This is the "control" the 5 MLP ablations and mlp_improved are compared to.
+extends: default.yaml
+
+variant: mlp_basic_dqn
+algorithm: dqn
+
+arch: mlp
+reward_mode: sparse
+double_dqn: false
+dueling: false
+per: false
+her: false

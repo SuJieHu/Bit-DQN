@@ -1,0 +1,14 @@
+# Transformer ablation: only Hindsight Experience Replay turned on.
+# Likely the dominant contributor to transformer_improved's near-1.0 eval
+# success_rate (the user explicitly wanted ablations to verify this).
+extends: transformer_encoder/_base.yaml
+
+variant: transformer_encoder_her
+algorithm: dqn
+
+reward_mode: sparse
+double_dqn: false
+dueling: false
+per: false
+her: true
+her_ratio: 1.0

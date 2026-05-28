@@ -1,0 +1,14 @@
+# Transformer base = vanilla DQN with the Transformer Q-network.
+# Same training budget, reward, loss, replay as mlp_basic_dqn -- only the
+# architecture changes. This is the "control" for the 5 transformer
+# ablations and transformer_improved.
+extends: transformer_encoder/_base.yaml
+
+variant: transformer_encoder_basic_dqn
+algorithm: dqn
+
+reward_mode: sparse
+double_dqn: false
+dueling: false
+per: false
+her: false

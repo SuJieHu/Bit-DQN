@@ -1,0 +1,13 @@
+# Decoder ablation: only dense reward shaping turned on.
+# Pair against transformer_reward_shaping (encoder twin) to isolate
+# the effect of the causal mask under a dense reward signal.
+extends: transformer/_base.yaml
+
+variant: transformer_reward_shaping
+algorithm: dqn
+
+reward_mode: shaped
+double_dqn: false
+dueling: false
+per: false
+her: false

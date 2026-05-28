@@ -1,0 +1,9 @@
+# Random policy baseline: at every position pick 0/1 uniformly.
+# No training. The success probability for length n is 2^{-n}.
+extends: default.yaml
+
+variant: baseline_random
+algorithm: baseline_random
+
+episodes: 0
+eval_episodes: 1000

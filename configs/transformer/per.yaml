@@ -1,0 +1,12 @@
+# Decoder ablation: only Prioritized Experience Replay turned on.
+# Pair against transformer_per.
+extends: transformer/_base.yaml
+
+variant: transformer_per
+algorithm: dqn
+
+reward_mode: sparse
+double_dqn: false
+dueling: false
+per: true
+her: false

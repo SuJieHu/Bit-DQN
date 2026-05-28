@@ -1,0 +1,14 @@
+# MLP ablation: only Double DQN turned on.
+# Online net picks the next action, target net evaluates it -> reduces
+# Q-value overestimation.
+extends: default.yaml
+
+variant: mlp_double_dqn
+algorithm: dqn
+
+arch: mlp
+reward_mode: sparse
+double_dqn: true
+dueling: false
+per: false
+her: false

@@ -1,0 +1,14 @@
+# MLP ablation: only reward shaping turned on (other improvements off).
+# Dense per-bit reward: +1/n for each correct bit, -0.25/n for each wrong bit,
+# plus a terminal +1/-0.25 bonus.
+extends: default.yaml
+
+variant: mlp_reward_shaping
+algorithm: dqn
+
+arch: mlp
+reward_mode: shaped
+double_dqn: false
+dueling: false
+per: false
+her: false

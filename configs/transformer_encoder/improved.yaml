@@ -1,0 +1,16 @@
+# Transformer "kitchen sink": all five DQN improvements on top of the
+# Transformer backbone. The headline config for large n.
+# Note: training schedule is identical to mlp_improved / transformer_basic_dqn
+# (1200 episodes per n, default epsilon decay) so the side-by-side
+# comparison against the 5 transformer ablations is apples-to-apples.
+extends: transformer_encoder/_base.yaml
+
+variant: transformer_encoder_improved
+algorithm: dqn
+
+reward_mode: shaped
+double_dqn: true
+dueling: true
+per: true
+her: true
+her_ratio: 1.0

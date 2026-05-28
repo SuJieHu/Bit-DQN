@@ -1,0 +1,16 @@
+# Decoder variant of transformer_improved (all 5 tricks). Headline
+# config of the encoder-decoder family. Compare directly against
+# transformer_improved to quantify how much of the near-1.0 accuracy is
+# explained by the masked-attention inductive bias vs the encoder's
+# bidirectional shortcut.
+extends: transformer/_base.yaml
+
+variant: transformer_improved
+algorithm: dqn
+
+reward_mode: shaped
+double_dqn: true
+dueling: true
+per: true
+her: true
+her_ratio: 1.0

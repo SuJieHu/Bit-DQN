@@ -1,0 +1,14 @@
+# Transformer DECODER control: encoder over target + causal decoder over
+# generated, sparse reward, no algorithmic improvements. This is the
+# apples-to-apples comparison vs transformer_basic_dqn: identical training
+# budget, identical hyperparameters, only the attention pattern differs.
+extends: transformer/_base.yaml
+
+variant: transformer_basic_dqn
+algorithm: dqn
+
+reward_mode: sparse
+double_dqn: false
+dueling: false
+per: false
+her: false

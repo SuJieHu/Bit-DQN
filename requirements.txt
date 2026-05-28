@@ -1,0 +1,10 @@
+--index-url https://pypi.tuna.tsinghua.edu.cn/simple/
+--extra-index-url https://download.pytorch.org/whl/cu128
+
+torch==2.7.1+cu128
+numpy>=1.24.0
+gymnasium>=0.28.0
+matplotlib>=3.7.0
+tqdm>=4.65.0
+wandb>=0.16.0
+PyYAML>=6.0

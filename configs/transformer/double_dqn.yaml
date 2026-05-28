@@ -1,0 +1,13 @@
+# Decoder ablation: only Double DQN turned on.
+# Pair against transformer_double_dqn to isolate "causal mask"
+# from "Double DQN target".
+extends: transformer/_base.yaml
+
+variant: transformer_double_dqn
+algorithm: dqn
+
+reward_mode: sparse
+double_dqn: true
+dueling: false
+per: false
+her: false
